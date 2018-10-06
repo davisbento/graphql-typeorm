@@ -1,1 +1,1 @@
-# graphql-ts-server-boilerplate
+# GRAPHQL + TS + TypeORM + Postgres
