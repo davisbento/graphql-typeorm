@@ -1,29 +1,59 @@
 
 import * as bcrypt from "bcryptjs";
+import * as yup from "yup";
 import { ResolverMap } from "../../types/graphql-utils";
 import { User } from "../../entity/User";
 import { GQL } from "../../types/schema";
+import { formatYupError } from "../../utils/formatYupError";
+
+const schema = yup.object().shape({
+  email: yup
+    .string()
+    .min(3)
+    .max(255)
+    .email(),
+  password: yup
+    .string()
+    .min(3)
+    .max(255)
+});
 
 export const resolvers: ResolverMap = {
   Query: {
     bye: () => "bye",
   },
   Mutation: {
-    register: async (_, { email, password }: GQL.IRegisterOnMutationArguments) => {
-      const hashedPassword = await bcrypt.hash(password, 10);
+    register: async (_, args: GQL.IRegisterOnMutationArguments) => {
       try {
-        const user = User.create({
-          email,
-          password: hashedPassword
-        });
+        await schema.validate(args, { abortEarly: false });
+      } catch (error) {
+        return formatYupError(error);
+      }
 
-        await user.save();
-        return true;
+      const { email, password } = args;
+      const userAlreadyExists = await User.findOne({
+        where: { email },
+        select: ["id"]
+      })
+
+      if (userAlreadyExists) {
+        return [
+          {
+            path: "email",
+            message: "already taken"
+          }
+        ]
       }
-      catch (err) {
-        console.log(err)
-        return false;
-      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = User.create({
+        email,
+        password: hashedPassword
+      });
+
+      await user.save();
+      return null;
     }
   }
 };
