@@ -5,6 +5,7 @@ import { ResolverMap } from "../../types/graphql-utils";
 import { User } from "../../entity/User";
 import { GQL } from "../../types/schema";
 import { formatYupError } from "../../utils/formatYupError";
+import { createConfirmEmailLink } from "../../utils/createConfirmEmailLink";
 
 const schema = yup.object().shape({
   email: yup
@@ -23,7 +24,7 @@ export const resolvers: ResolverMap = {
     bye: () => "bye",
   },
   Mutation: {
-    register: async (_, args: GQL.IRegisterOnMutationArguments) => {
+    register: async (_, args: GQL.IRegisterOnMutationArguments, { redis, url }) => {
       try {
         await schema.validate(args, { abortEarly: false });
       } catch (error) {
@@ -53,6 +54,9 @@ export const resolvers: ResolverMap = {
       });
 
       await user.save();
+
+      const link = await createConfirmEmailLink(url, user.id, redis);
+
       return null;
     }
   }
