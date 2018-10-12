@@ -1,14 +1,6 @@
+import { createTypeOrmConn } from '../utils/createConnection';
 import { request } from 'graphql-request';
-import { startServer } from '../../startServer';
-import { User } from '../../entity/User';
-
-let getHost = () => '';
-
-beforeAll(async () => {
-  const app = await startServer();
-  const { port }: any = app.address();
-  getHost = () => `http://127.0.0.1:${port}`;
-});
+import { User } from '../entity/User';
 
 const email = 'davi.bento53@teste.com';
 const password = '1234567abc';
@@ -22,9 +14,13 @@ const mutation = `
   }
 `;
 
-describe("Register USER", async() => {
+beforeAll(async () => {
+  await createTypeOrmConn();
+});
+
+describe("Register USER", async () => {
   it("Register user - SUCCESS", async () => {
-    const response = await request(getHost(), mutation);
+    const response = await request(process.env.TEST_HOST as string, mutation);
     expect(response).toEqual({ register: null });
     const users = await User.find({ where: { email } });
     expect(users).toHaveLength(1);
@@ -32,11 +28,11 @@ describe("Register USER", async() => {
     expect(user.email).toEqual(email);
     expect(user.password).not.toEqual(password);
   })
-  
+
   it("Register user - Email Already taken", async () => {
-    const response: any = await request(getHost(), mutation);
+    const response: any = await request(process.env.TEST_HOST as string, mutation);
     expect(response.register).toHaveLength(1);
-    expect(response.register[0].path).toEqual("email"); 
-    expect(response.register[0].message).toEqual("already taken"); 
+    expect(response.register[0].path).toEqual("email");
+    expect(response.register[0].message).toEqual("already taken");
   })
 });
