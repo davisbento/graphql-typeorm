@@ -1,19 +1,12 @@
-import { Entity, Column, PrimaryColumn, BeforeInsert, BaseEntity } from "typeorm";
-import * as uuidv4 from "uuid/v4";
+import { Entity, Column, PrimaryColumn, BaseEntity } from 'typeorm';
 
-@Entity("users")
+@Entity('users')
 export class User extends BaseEntity {
+  @PrimaryColumn('uuid') id: string;
 
-    @PrimaryColumn("uuid") id: string;
+  @Column('varchar', { length: 255 }) email: string;
 
-    @Column("varchar", { length: 255 }) email: string;
+  @Column('text') password: string;
 
-    @Column("text") password: string;
-
-    @Column("boolean", { default: false  }) confirmed: boolean;
-
-    @BeforeInsert()
-    addId() {
-        this.id = uuidv4();
-    }
+  @Column('boolean', { default: false }) confirmed: boolean;
 }
